@@ -1,4 +1,4 @@
-# hello-openraft 项目完成报告
+# openraft-memory 项目完成报告
 
 本项目已成功实现了一个分布式 Key-Value 存储系统，专门用于管理 `Student` (学生) 对象。该系统基于 **OpenRaft 0.9.21** 协议，支持通过 REST (Axum) 和 gRPC (Tonic) 进行 CRUD 操作。
 
@@ -18,10 +18,10 @@
 
 | 模块 | 说明 | 关键文件 |
 |---|---|---|
-| **Storage** | 内存日志与状态机，实现了 Raft 协议要求的持久化接口 | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/store/mod.rs) |
-| **Network** | 基于 Tonic 的 gRPC 通信层，处理 AppendEntries, Vote 等 | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/network/mod.rs) |
-| **API** | 同时暴露 REST 与 gRPC 客户端接口，处理业务 CRUD | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/api/mod.rs) |
-| **Config** | 灵活的节点 ID、端口及 peer 节点管理 | [config.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/config.rs) |
+| **Storage** | 内存日志与状态机，实现了 Raft 协议要求的持久化接口 | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/store/mod.rs) |
+| **Network** | 基于 Tonic 的 gRPC 通信层，处理 AppendEntries, Vote 等 | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/network/mod.rs) |
+| **API** | 同时暴露 REST 与 gRPC 客户端接口，处理业务 CRUD | [mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/api/mod.rs) |
+| **Config** | 灵活的节点 ID、端口及 peer 节点管理 | [config.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/config.rs) |
 
 ## 验证结果
 
