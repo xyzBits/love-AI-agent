@@ -1,5 +1,5 @@
-use openraft::RaftTypeConfig;
 use serde::{Deserialize, Serialize};
+use openraft::RaftTypeConfig;
 
 pub mod pb {
     tonic::include_proto!("raft_service");
@@ -27,9 +27,7 @@ pub struct Response {
 }
 
 /// OpenRaft 的类型配置
-#[derive(
-    Debug, Clone, Copy, Default, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd, Hash,
-)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TypeConfig {}
 
 impl std::fmt::Display for TypeConfig {

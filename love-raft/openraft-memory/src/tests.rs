@@ -18,6 +18,7 @@ mod tests {
 
         let network = NetworkFactory {
             node_addresses: Arc::new(HashMap::new()),
+            protocol: crate::config::RaftProtocol::Grpc,
         };
 
         let raft = Raft::new(node_id, raft_config, network, log_store, state_machine).await?;

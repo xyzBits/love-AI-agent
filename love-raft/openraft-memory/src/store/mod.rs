@@ -1,22 +1,22 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::fmt::Debug;
 use std::io::Cursor;
 use std::ops::RangeBounds;
 use std::sync::Arc;
+use std::fmt::Debug;
 
+use openraft::storage::LogState;
 use openraft::Entry;
 use openraft::EntryPayload;
 use openraft::LogId;
 use openraft::RaftLogReader;
 use openraft::RaftSnapshotBuilder;
+use openraft::storage::RaftStorage;
 use openraft::Snapshot;
 use openraft::SnapshotMeta;
 use openraft::StorageError;
 use openraft::StoredMembership;
 use openraft::Vote;
-use openraft::storage::LogState;
-use openraft::storage::RaftStorage;
 use tokio::sync::RwLock;
 
 use crate::model::{Request, Response, Student, TypeConfig};
@@ -62,10 +62,7 @@ impl Store {
 
 impl RaftLogReader<TypeConfig> for Store {
     /// 根据范围获取一批日志条目
-    async fn try_get_log_entries<RB>(
-        &mut self,
-        range: RB,
-    ) -> Result<Vec<Entry<TypeConfig>>, StorageError<u64>>
+    async fn try_get_log_entries<RB>(&mut self, range: RB) -> Result<Vec<Entry<TypeConfig>>, StorageError<u64>>
     where
         RB: RangeBounds<u64> + Clone + Debug + Send,
     {
@@ -132,10 +129,7 @@ impl RaftStorage<TypeConfig> for Store {
     }
 
     /// 删除与 Leader 冲突的日志 (回滚逻辑)
-    async fn delete_conflict_logs_since(
-        &mut self,
-        log_id: LogId<u64>,
-    ) -> Result<(), StorageError<u64>> {
+    async fn delete_conflict_logs_since(&mut self, log_id: LogId<u64>) -> Result<(), StorageError<u64>> {
         let mut l = self.log_store.write().await;
         l.logs.split_off(&log_id.index);
         Ok(())
@@ -149,22 +143,14 @@ impl RaftStorage<TypeConfig> for Store {
     /// 获取状态机最后一次应用的状态 (用于恢复或同步)
     async fn last_applied_state(
         &mut self,
-    ) -> Result<
-        (
-            Option<LogId<u64>>,
-            StoredMembership<u64, openraft::impls::EmptyNode>,
-        ),
-        StorageError<u64>,
-    > {
+    ) -> Result<(Option<LogId<u64>>, StoredMembership<u64, openraft::impls::EmptyNode>), StorageError<u64>> {
         let sm = self.state_machine.read().await;
         Ok((sm.last_applied_log_id, sm.last_membership.clone()))
     }
 
     /// 将已提交的日志条目应用到状态机 (最终数据写入点)
-    async fn apply_to_state_machine(
-        &mut self,
-        entries: &[Entry<TypeConfig>],
-    ) -> Result<Vec<Response>, StorageError<u64>> {
+    async fn apply_to_state_machine(&mut self, entries: &[Entry<TypeConfig>]) -> Result<Vec<Response>, StorageError<u64>>
+    {
         let mut sm = self.state_machine.write().await;
         let mut res = Vec::new();
 
@@ -208,12 +194,7 @@ impl RaftStorage<TypeConfig> for Store {
                             let old = sm.data.remove(&id);
                             res.push(Response {
                                 success: old.is_some(),
-                                message: if old.is_some() {
-                                    "学生信息已删除"
-                                } else {
-                                    "未找到该学生"
-                                }
-                                .to_string(),
+                                message: if old.is_some() { "学生信息已删除" } else { "未找到该学生" }.to_string(),
                                 data: old,
                             });
                         }
@@ -234,10 +215,8 @@ impl RaftStorage<TypeConfig> for Store {
     }
 
     /// 开始接收快照流
-    async fn begin_receiving_snapshot(
-        &mut self,
-    ) -> Result<Box<Cursor<Vec<u8>>>, StorageError<u64>> {
-        let data = <TypeConfig as openraft::RaftTypeConfig>::SnapshotData::default();
+    async fn begin_receiving_snapshot(&mut self) -> Result<Box<Cursor<Vec<u8>>>, StorageError<u64>> {
+        let data = <TypeConfig as openraft::RaftTypeConfig>::SnapshotData::default(); 
         Ok(Box::new(data))
     }
 
@@ -251,9 +230,7 @@ impl RaftStorage<TypeConfig> for Store {
     }
 
     /// 获取当前的最新快照
-    async fn get_current_snapshot(
-        &mut self,
-    ) -> Result<Option<Snapshot<TypeConfig>>, StorageError<u64>> {
+    async fn get_current_snapshot(&mut self) -> Result<Option<Snapshot<TypeConfig>>, StorageError<u64>> {
         Ok(None)
     }
 

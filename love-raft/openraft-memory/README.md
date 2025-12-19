@@ -25,99 +25,96 @@
 
 ---
 
-## 3. 详细架构流程
+## 3. 核心架构与端口分配
 
-### 3.1 核心数据结构 ([src/model/mod.rs](src/model/mod.rs))
+为了职责清晰，本项目将业务接口与 Raft 内部通信接口进行了物理隔离（不同端口）。
 
-我们需要定义 Raft 节点之间传递的消息格式：
+### 端口映射表
 
-```rust
-// 定义业务数据：学生模型
-pub struct Student {
-    pub id: i64,
-    pub name: String,
-    pub score: f32,
-}
+| 节点 ID | Raft 端口 (内网/Raft RPC) | Student gRPC 端口 (外网/业务) | 业务 HTTP 端口 (外网) |
+| :--- | :--- | :--- | :--- |
+| 配置项 | `raft_grpc_port` | `business_grpc_port` | `business_http_port` |
+| **节点 1** | **50051** | **60051** | **8081** |
+| **节点 2** | **50052** | **60052** | **8082** |
+| **节点 3** | **50053** | **60053** | **8083** |
 
-// 定义 Raft 输入请求
-pub enum Request {
-    Create(Student),
-    Update(Student),
-    Delete(i64),
-}
+> [!IMPORTANT]
+> **端口隔离说明**：
+> - 当 `RAFT_PROTOCOL=grpc` 时，`raft_grpc_port` 运行 gRPC 服务。
+> - 当 `RAFT_PROTOCOL=http` 时，`raft_grpc_port` 运行独立的 HTTP 服务，仅响应 `/raft/*` 路径。
+> - 业务逻辑始终运行在 `business_http_port` (808x) 上。
+
+---
+
+## 4. HTTP API 接口参考
+
+### 4.1 业务接口 (Port: 808x)
+
+这些接口用于外部客户端管理学生数据及查询集群状态。
+
+| 动作 | 路径 | 描述 | 请求体 (JSON) / 参数 |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/student` | 创建学生信息 | `{"id": 101, "name": "张三", "score": 95.5, ...}` |
+| **GET** | `/student/:id` | 获取学生信息 | URL 参数 `id` |
+| **DELETE** | `/student/:id` | 删除学生信息 | URL 参数 `id` |
+| **GET** | `/cluster/info` | 查询集群拓扑与状态 | 无 |
+
+### 4.2 Raft 内部接口 (Port: 5005x)
+
+*注：仅在 `RAFT_PROTOCOL=http` 时启用。*
+
+| 路径 | 描述 | 说明 |
+| :--- | :--- | :--- |
+| `/raft/append_entries` | 日志复制/心跳 | 由 Leader 调用，同步数据给 Follower |
+| `/raft/vote` | 投票请求 | 候选者在选举期间发起 |
+| `/raft/install_snapshot` | 安装快照 | 用于同步大量滞后数据 |
+
+---
+
+## 5. 运行与操作指南
+
+### 启动节点
+
+```powershell
+# 启动节点 1 (默认)
+$env:NODE_ID="1"; cargo run
+
+# 切换协议启动节点 2 (HTTP 模式)
+$env:NODE_ID="2"; $env:RAFT_PROTOCOL="http"; cargo run
 ```
 
-### 3.2 存储层 ([src/store/mod.rs](src/store/mod.rs))
+### 业务接口测试示例 (HTTP)
 
-存储层是数据的“港湾”。本项目使用内存实现，包含两个核心功能：
+```bash
+# 1. 创建学生
+curl -X POST http://127.0.0.1:8081/student \
+     -H "Content-Type: application/json" \
+     -d '{"id": 101, "name": "张三", "age": 20, "gender": "男", "score": 95.5}'
 
-1. **LogStore (日志存储)**: 记录所有历史操作，保证数据不丢失。
-2. **StateMachine (状态机)**: 真实的业务数据库 (一个 `HashMap`)。
+# 2. 查询学生
+curl http://127.0.0.1:8081/student/101
 
-```rust
-// 状态机应用逻辑示例
-async fn apply_to_state_machine(&mut self, entries: &[Entry<TypeConfig>]) -> Result<Vec<Response>, StorageError<u64>> {
-    let mut sm = self.state_machine.write().await;
-    for entry in entries {
-        if let EntryPayload::Normal(Request::Create(std)) = &entry.payload {
-            sm.data.insert(std.id, std.clone()); // 真正写入数据库
-        }
-    }
-}
+# 3. 查询集群状态
+curl http://127.0.0.1:8081/cluster/info | jq
 ```
 
-### 3.3 网络层 ([src/network/mod.rs](src/network/mod.rs))
+### 业务接口测试示例 (gRPC)
 
-网络层负责节点间的“握手”与“交谈”。节点间使用 gRPC 通信：
-
-```rust
-// 发送 AppendEntries 请求给其他节点
-async fn append_entries(&mut self, req: AppendEntriesRequest<TypeConfig>) -> Result<AppendEntriesResponse<u64>, ...> {
-    let client = RaftServiceClient::connect(self.addr.clone()).await?;
-    let json_data = serde_json::to_string(&req)?; // 序列化
-    let pb_req = PbAppendEntriesRequest { data: json_data };
-    client.append_entries(pb_req).await // 发送
-}
-```
-
-### 3.4 启动与初始化 ([src/main.rs](src/main.rs))
-
-在 `main` 函数中，我们将各个组件连接起来：
-
-```rust
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let store = Store::new(); // 1. 创建存储
-    let network = NetworkFactory { ... }; // 2. 创建网络
-    let raft = Raft::new(node_id, config, network, store_adaptor).await?; // 3. 创建 Raft 引擎
-    
-    // 4. 启动 REST API 和 gRPC Server
-    tokio::spawn(axum::serve(listener, app));
-    tokio::spawn(tonic_server.serve(grpc_addr));
-}
+```bash
+# 使用 grpcurl 访问业务 gRPC (60051)
+grpcurl -plaintext -import-path ./proto -proto raft.proto \
+    -d '{"student": {"id": 102, "name": "李四", "age": 21, "gender": "女", "score": 88.0}}' \
+    127.0.0.1:60051 raft_service.StudentService/CreateStudent
 ```
 
 ---
 
-## 4. 一个写请求的生命周期
+## 6. 一个请求的生命周期 (Raft 流程)
 
-当您发送 `POST /student` 时，发生了什么？
-
-1. **接收**: Axum 收到请求，解析成 `Student` 结构体。
-2. **提交**: 调用 `raft.client_write(Request::Create(student))`。
-3. **共识**: Leader (当前节点) 将此请求存入自己的 `LogStore`，同时发送给 Followers。
-4. **决策**: 超过“半数”节点确认后，Leader 标记日志为“已提交”。
-5. **应用**: 日志被传给 `StateMachine`，学生信息存入 HashMap。
-6. **返回**: Leader 告知用户“操作执行成功”。
-
----
-
-## 5. 为什么本项目的 OpenRaft 实现比较特别？
-
-- **Native Async (原生异步)**: 基于 Rust 1.75+ 的原生异步特性，不再需要巨大的宏。
-- **Adaptor 模式**: 我们实现了一个统一的 `Store`，通过 `Adaptor` 自动桥接到 OpenRaft 内部。
-- **详细代码引用**: 
-    - 更多细节请参考 [src/store/mod.rs](src/store/mod.rs) 中的中文注释。
-    - 接口定义见 [src/api/mod.rs](src/api/mod.rs)。
+1. **接收**: 业务 HTTP (808x) 收到 `POST /student`。
+2. **提交**: 调用 `raft.client_write(...)`。
+3. **共识**: Leader 通过 Raft 端口 (5005x) 与其他节点通信（gRPC 或 HTTP）。
+4. **提交**: 多数派确认后，日志在所有节点的状态机中应用。
+5. **返回**: 业务接口返回成功响应。
 
 希望这份文档能帮助您快速上手分布式一致性系统！

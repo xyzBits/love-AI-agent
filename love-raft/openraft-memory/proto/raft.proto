@@ -67,8 +67,10 @@ service RaftService {
     rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
     rpc Vote(VoteRequest) returns (VoteResponse);
     rpc InstallSnapshot(InstallSnapshotRequest) returns (InstallSnapshotResponse);
+}
 
-    // 客户端接口
+service StudentService {
+    // 客户端业务接口
     rpc CreateStudent(CreateStudentRequest) returns (StudentResponse);
     rpc GetStudent(GetStudentRequest) returns (StudentResponse);
     rpc UpdateStudent(UpdateStudentRequest) returns (StudentResponse);

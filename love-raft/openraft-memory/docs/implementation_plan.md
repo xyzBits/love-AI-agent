@@ -40,22 +40,22 @@ pub struct Student {
 
 ### openraft-memory
 
-#### [MODIFY] [Cargo.toml](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/Cargo.toml)
+#### [MODIFY] [Cargo.toml](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/Cargo.toml)
 添加 `openraft`, `tonic`, `axum`, `tokio`, `serde` 等依赖。
 
-#### [NEW] [src/main.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/main.rs)
+#### [NEW] [src/main.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/main.rs)
 应用入口，初始化配置与服务启动。
 
-#### [NEW] [src/model.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/model.rs)
+#### [NEW] [src/model.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/model.rs)
 定义数据结构与协议。
 
-#### [NEW] [src/store/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/store/)
+#### [NEW] [src/store/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/store/)
 实现 `LogStore` 与 `StateMachine`。
 
-#### [NEW] [src/network/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/network/)
+#### [NEW] [src/network/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/network/)
 基于 gRPC 的 Raft 通信网络实现。
 
-#### [NEW] [src/api/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/api/)
+#### [NEW] [src/api/](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/api/)
 实现 REST 与客户端 gRPC 服务。
 
 ## 验证计划

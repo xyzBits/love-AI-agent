@@ -27,17 +27,17 @@
 
 ## 3. 详细架构流程
 
-### 3.1 存储层 ([src/store/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/store/mod.rs))
+### 3.1 存储层 ([src/store/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/store/mod.rs))
 存储层是数据的“港湾”。本项目使用了内存实现，主要包含两部分：
 1. **LogStore (日志存储)**: 记录了 Raft 的所有历史操作。即使数据还没应用到数据库，只要在这里持久化了，Raft 就能保证它不丢失。
 2. **StateMachine (状态机)**: 真实的业务数据库。当日志被“提交”后，会被应用到这里。本项目中就是一个 `HashMap<ID, Student>`。
 
-### 3.2 网络层 ([src/network/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/network/mod.rs))
+### 3.2 网络层 ([src/network/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/network/mod.rs))
 网络层是节点的“嘴巴”和“耳朵”：
 - **NetworkFactory**: 负责根据节点 ID 查找 IP 地址并建立连接。
 - **NetworkConnection**: 发送 AppendEntries (快照/日志同步) 和 Vote (请求投票) 的具体实现。
 
-### 3.3 接口层 ([src/api/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/openraft-memory/src/api/mod.rs))
+### 3.3 接口层 ([src/api/mod.rs](file:///c:/Users/lidf0/xyz/personal/language/rust/github/raft/hello-openraft/src/api/mod.rs))
 这是系统的“大门”：
 - **RaftGrpcServer**: 监听 50051 等端口，接收来自其他机器的消息。
 - **Axum Router**: 监听 8081 等端口，接收普通用户的 HTTP 请求。
