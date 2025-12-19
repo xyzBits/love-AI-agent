@@ -1,10 +1,10 @@
-use hello_openraft::api::RaftGrpcServer;
-use hello_openraft::model::pb::raft_service_server::RaftServiceServer;
-use hello_openraft::model::{Request, Response, Student};
-use hello_openraft::network::NetworkFactory;
-use hello_openraft::store::Store;
 use openraft::storage::Adaptor;
 use openraft::{Config, Raft};
+use openraft_memory::api::RaftGrpcServer;
+use openraft_memory::model::pb::raft_service_server::RaftServiceServer;
+use openraft_memory::model::{Request, Response, Student};
+use openraft_memory::network::NetworkFactory;
+use openraft_memory::store::Store;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use tokio::time::{Duration, sleep};
@@ -14,7 +14,7 @@ async fn start_node(
     id: u64,
     rpc_port: u16,
     all_nodes: HashMap<u64, String>,
-) -> (Arc<Raft<hello_openraft::model::TypeConfig>>, Arc<Store>) {
+) -> (Arc<Raft<openraft_memory::model::TypeConfig>>, Arc<Store>) {
     let raft_config = Arc::new(Config::default());
     let store = Store::new();
     let (log_store, state_machine) = Adaptor::new(store.clone());

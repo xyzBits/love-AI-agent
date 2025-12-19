@@ -3,15 +3,15 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::routing::{get, post};
-use hello_openraft::api::{
-    AppState, RaftGrpcServer, delete_student_rest, get_student_rest, write_student,
-};
-use hello_openraft::config::AppConfig;
-use hello_openraft::model::pb::raft_service_server::RaftServiceServer;
-use hello_openraft::network::NetworkFactory;
-use hello_openraft::store::Store;
 use openraft::storage::Adaptor;
 use openraft::{Config, Raft};
+use openraft_memory::api::{
+    AppState, RaftGrpcServer, delete_student_rest, get_student_rest, write_student,
+};
+use openraft_memory::config::AppConfig;
+use openraft_memory::model::pb::raft_service_server::RaftServiceServer;
+use openraft_memory::network::NetworkFactory;
+use openraft_memory::store::Store;
 use tonic::transport::Server;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
