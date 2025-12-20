@@ -39,3 +39,29 @@ Raft 的核心是节点之间交换消息。你可以为每个接口定义一个
 
 ### 总结
 对于简单的演示，HTTP 是可行的；但在生产环境或高性能要求下，gRPC 是更专业、更通用的做法。
+
+---
+
+## 3. 业务 HTTP 与 Raft HTTP 为什么要使用不同的端口？
+
+在分布式系统中，将**业务接口**与**共识协议内部接口**进行物理隔离（使用不同端口）是一种最佳实践。
+
+### 核心原因
+*   **安全性 (Security)**：Raft 内部接口（如 `/raft/vote`）涉及集群的管理权限。如果与业务接口混用同一个端口，一旦业务端口暴露给公网，攻击者可能利用内部协议漏洞干扰集群共识。通过端口分离，我们可以只将业务端口对外，而将 Raft 端口通过防火墙限制在内网。
+*   **职责清晰 (Separation of Concerns)**：业务代码由业务端口处理，Raft 逻辑由协议端口处理。这在监控、限流和日志分析时能更清晰地识别流量来源。
+*   **负载隔离 (Load Isolation)**：当业务高并发导致 HTTP 服务压力巨大时，独立的 Raft 端口可以确保心跳、选主等关键协议流量不被阻塞，提高系统的稳定性。
+
+---
+
+## 4. 如果将写请求（如创建学生）发给 Follower 节点会发生什么？
+
+在 Raft 集群中，只有 **Leader** 节点可以接收并处理客户端的“写”操作。
+
+### 行为表现
+1.  **Raft 层的拦截**：当您向 Follower 发送请求时，Follower 的业务层会调用 Raft 引擎的 `client_write`。
+2.  **返回错误**：Raft 引擎会检测到当前节点不是 Leader，并立即返回一个错误（通常是 `ForwardToLeader`），其中包含了当前节点所感知的 Leader 地址。
+3.  **响应客户端**：我们的 API 层（gRPC 或 HTTP）会捕获此错误并返回给客户端。客户端收到后，应当根据错误信息中的地址，重新向真正的 Leader 发起请求。
+
+### 代码位置
+*   **拦截邏輯**：发生在 `openraft` 库内部。
+*   **业务处理逻辑**：在 [src/api/student.rs](file:///c:/Users/lidf0/xyz/personal/blockchain/love-AI-agent/love-raft/openraft-memory/src/api/student.rs) 的 `write_student` (HTTP) 和 `create_student` (gRPC) 函数中，通过匹配 `raft.client_write` 的返回结果来处理错误。
