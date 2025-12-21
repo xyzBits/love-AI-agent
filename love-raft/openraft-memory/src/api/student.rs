@@ -1,7 +1,4 @@
 use std::sync::Arc;
-// use axum::extract::{Path, State};
-// use axum::response::IntoResponse;
-// use axum::Json;
 
 use tonic::{Request as TonicRequest, Response as TonicResponse, Status};
 use tracing::{error, info};
@@ -13,7 +10,6 @@ use crate::model::pb::{
 };
 use crate::model::{Request, Student, TypeConfig};
 use crate::store::Store;
-// use crate::api::AppState;
 
 /// StudentGrpcServer (业务 gRPC 服务实现)
 pub struct StudentGrpcServer {

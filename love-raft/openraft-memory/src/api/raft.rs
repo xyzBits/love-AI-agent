@@ -1,8 +1,4 @@
 use crate::model::TypeConfig;
-use openraft::raft::AppendEntriesResponse;
-use std::sync::Arc;
-use tonic::{Request as TonicRequest, Response as TonicResponse, Status};
-
 use crate::model::pb::raft_service_server::RaftService;
 use crate::model::pb::{
     AppendEntriesRequest as PbAppendEntriesRequest,
@@ -11,7 +7,10 @@ use crate::model::pb::{
     InstallSnapshotResponse as PbInstallSnapshotResponse, VoteRequest as PbVoteRequest,
     VoteResponse as PbVoteResponse,
 };
-// use crate::api::AppState;
+use openraft::raft::AppendEntriesResponse;
+use std::sync::Arc;
+use tonic::{Request as TonicRequest, Response as TonicResponse, Status};
+use tracing::info;
 
 /// RaftGrpcServer (Raft 内部 gRPC 服务实现)
 pub struct RaftGrpcServer {
@@ -25,6 +24,9 @@ impl RaftService for RaftGrpcServer {
         request: TonicRequest<PbAppendEntriesRequest>,
     ) -> Result<TonicResponse<PbAppendEntriesResponse>, Status> {
         let req_data = request.into_inner();
+
+        info!("append_entries req_data: {:?}", req_data.data);
+
         let req: openraft::raft::AppendEntriesRequest<TypeConfig> =
             serde_json::from_str(&req_data.data).map_err(|e| Status::internal(e.to_string()))?;
 
