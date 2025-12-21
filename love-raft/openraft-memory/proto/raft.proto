@@ -2,15 +2,6 @@ syntax = "proto3";
 
 package raft_service;
 
-// Student 对象定义
-message Student {
-    int64 id = 1;
-    string name = 2;
-    int32 age = 3;
-    string gender = 4;
-    float score = 5;
-}
-
 // Raft 节点间通信消息
 message AppendEntriesRequest {
     string data = 1; // 简化处理，实际可以使用字节流
@@ -39,40 +30,9 @@ message InstallSnapshotResponse {
     string data = 2;
 }
 
-// 客户端 CRUD 请求与响应
-message CreateStudentRequest {
-    Student student = 1;
-}
-
-message GetStudentRequest {
-    int64 id = 1;
-}
-
-message UpdateStudentRequest {
-    Student student = 1;
-}
-
-message DeleteStudentRequest {
-    int64 id = 1;
-}
-
-message StudentResponse {
-    bool success = 1;
-    string message = 2;
-    Student student = 3;
-}
-
 service RaftService {
     // Raft 内部通信
     rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
     rpc Vote(VoteRequest) returns (VoteResponse);
     rpc InstallSnapshot(InstallSnapshotRequest) returns (InstallSnapshotResponse);
-}
-
-service StudentService {
-    // 客户端业务接口
-    rpc CreateStudent(CreateStudentRequest) returns (StudentResponse);
-    rpc GetStudent(GetStudentRequest) returns (StudentResponse);
-    rpc UpdateStudent(UpdateStudentRequest) returns (StudentResponse);
-    rpc DeleteStudent(DeleteStudentRequest) returns (StudentResponse);
 }

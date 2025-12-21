@@ -1,5 +1,7 @@
 /target
-*.log
-.idea 
 
+.idea 
+*.log
 *.txt
+
+
