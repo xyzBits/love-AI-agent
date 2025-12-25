@@ -28,16 +28,16 @@ impl Validator {
 pub struct TxPool {
     // 共享状态：交易哈希 --> 交易实体
     // java 思维：用锁保护共享资源
-    // pool: Arc<std::sync::Mutex<HashMap<String, Transaction>>>,
-    pool: Arc<tokio::sync::Mutex<HashMap<String, Transaction>>>,
+    pool: Arc<std::sync::Mutex<HashMap<String, Transaction>>>,
+    // pool: Arc<tokio::sync::Mutex<HashMap<String, Transaction>>>,
     validator: Validator,
 }
 
 impl TxPool {
     pub fn new() -> Self {
         Self {
-            // pool: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            pool: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
+            pool: Arc::new(std::sync::Mutex::new(HashMap::new())),
+            // pool: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
             validator: Validator,
         }
     }
@@ -46,8 +46,8 @@ impl TxPool {
     // 目标：添加一笔交易，如果已存在则忽略，如果不存在，先验证，通过后再插入
     pub async fn add_transaction(&self, tx: Transaction) -> Result<(), String> {
         // 步骤 A: 上锁，准备操作
-        // let mut pool_guard = self.pool.lock().unwrap();
-        let mut pool_guard = self.pool.lock().await;
+        let mut pool_guard = self.pool.lock().unwrap();
+        // let mut pool_guard = self.pool.lock().await;
 
         // 先把 hash 克隆一份存在局部变量里
         let hash_log = tx.hash.clone();
@@ -71,6 +71,47 @@ impl TxPool {
 
         Ok(())
     }
+
+
+    pub async fn add_transaction_v2(&self, tx: Transaction) -> Result<(), String> {
+        // --- 阶段 1: 快速查重 (持有锁的时间极短) ---
+        {
+            // 使用大括号创建一个独立的作用域
+            // pool_guard 在这个大括号结束时会自动 Drop (释放锁)
+            let pool_guard = self.pool.lock().unwrap();
+            if pool_guard.contains_key(&tx.hash) {
+                return Ok(());
+            }
+            // 这里大括号结束，pool_guard 被销毁，锁被释放！
+            // 此时我们手里没有任何锁。
+        }
+
+        // --- 阶段 2: 慢速验证 (无锁，高并发！) ---
+        // 此时成千上万个线程可以同时在这里跑 validate，互不干扰
+        let is_valid = self.validator.validate(&tx).await;
+
+        if !is_valid {
+            return Err("Invalid transaction".to_string());
+        }
+
+        // --- 阶段 3: 写入 (再次拿锁) ---
+        {
+            let mut pool_guard = self.pool.lock().unwrap();
+            // 严谨的系统可能需要在这里做 "Double Check" (再次查重)
+            // 防止在验证期间，别人已经把这笔交易插进去了
+            if pool_guard.contains_key(&tx.hash) {
+                return Ok(());
+            }
+
+            // 这里的 tx 需要 clone 吗？
+            // 之前的打印报错是因为你先 move 再 print。
+            // 现在的逻辑里，print 可以放在这就行。
+            println!("Inserted tx: {}", tx.hash);
+            pool_guard.insert(tx.hash.clone(), tx);
+        }
+
+        Ok(())
+    }
 }
 
 // tokio::sync::Mutex 使用信号量，而不是操作系统
@@ -89,7 +130,8 @@ async fn test() {
             };
 
             // 如果注释掉下面的代码，就没有并发问题
-            match pool_clone.add_transaction(tx).await {
+            // match pool_clone.add_transaction(tx).await {
+            match pool_clone.add_transaction_v2(tx).await {
                 Ok(_) => println!("Task {} done", i),
                 Err(e) => println!("Task {} failed: {}", i, e),
             }
