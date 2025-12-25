@@ -72,7 +72,6 @@ impl TxPool {
         Ok(())
     }
 
-
     pub async fn add_transaction_v2(&self, tx: Transaction) -> Result<(), String> {
         // --- 阶段 1: 快速查重 (持有锁的时间极短) ---
         {
