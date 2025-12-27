@@ -5,3 +5,4 @@ mod _2025_12_24_fuck;
 mod _2025_12_25_fuck;
 mod _2025_12_25_fuck_optimize;
 mod _2025_12_26_fuck;
+mod _2025_12_27_fuck;
