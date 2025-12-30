@@ -1,11 +1,9 @@
-use tokio_util::codec::Decoder;
-use bytes::{BytesMut, Buf};
+use bytes::{Buf, BytesMut};
 use serde::{Deserialize, Serialize};
-
+use tokio_util::codec::Decoder;
 
 #[allow(dead_code)]
 #[allow(unused_variables)]
-
 // ================= 1. 定义消息协议 =================
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum P2PMessage {
@@ -135,68 +133,4 @@ mod tests {
 
         assert_eq!(buf.len(), 7);
     }
-
-
-
-
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

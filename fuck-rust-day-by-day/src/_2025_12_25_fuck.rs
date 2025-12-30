@@ -1,3 +1,6 @@
+#[allow(unused_variables)]
+#[allow(unused_assignments)]
+#[allow(unused)]
 #[tokio::test]
 async fn test_busy_loop_trap() {
     // 1. 创建两个通道
