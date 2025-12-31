@@ -20,6 +20,8 @@ use reth_ethereum::{
     primitives::SealedHeader, provider::providers::ReadOnlyConfig, storage::HeaderProvider,
 };
 
+mod rlp_practice;
+
 // 引入 alloy-primitives 包，但不直接使用它
 
 // Providers are zero cost abstractions on top of an opened MDBX Transaction

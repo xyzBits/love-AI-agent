@@ -13,4 +13,10 @@ alloy-primitives = { version = "1.5.0", default-features = false, features = ["m
 
 eyre = "0.6"
 
+[dev-dependencies]
+alloy-rlp = {version = "0.3", features = ["derive"] }
+hex = "0.4"
+# 用于计算 keccak256
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+prost = {version =  "0.14.1", features = ["derive"] }
 
