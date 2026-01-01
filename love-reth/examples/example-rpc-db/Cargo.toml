@@ -1,0 +1,15 @@
+[package]
+name = "example-rpc-db"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3"
+jsonrpsee ={ version = "0.26.0", features = ["server", "client", "macros"] }
+reth-ethereum = { path = "/home/xyz-bits/projects/blockchain/ethereum/reth/crates/ethereum/reth", features = ["test-utils", "node", "provider", "pool", "network", "rpc"] }
+tokio = { version = "1.44.2", features = ["full"] }
+eyre = "0.6"
+
+[dev-dependencies]
+serde = "1.0"
+anyhow = "1.0"
