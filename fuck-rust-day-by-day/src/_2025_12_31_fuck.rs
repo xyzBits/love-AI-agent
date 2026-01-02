@@ -1,4 +1,4 @@
-use core::{fmt, str};
+use core::fmt;
 use std::{fmt::Display, hash::Hash};
 
 //关键点： auto_impl 必须作用于一种 “包装容器”（如引用、指针、智能指针）。
@@ -84,9 +84,7 @@ struct Point {
 }
 
 #[allow(dead_code)]
-impl OutlinePrint for Point {
-    
-}
+impl OutlinePrint for Point {}
 
 #[allow(dead_code)]
 impl Display for Point {
@@ -103,5 +101,4 @@ fn test_work() {
     let mut data = Vec::new();
     data.push(1);
     assert_eq!(data.contains(&1), true);
-
 }
