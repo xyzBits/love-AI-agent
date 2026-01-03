@@ -20,3 +20,7 @@ hex = "0.4"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
 prost = {version =  "0.14.1", features = ["derive"] }
 
+# reth-codecs = { path = "/home/xyz-bits/projects/blockchain/ethereum/reth/crates/storage/codecs", features = ["derive"] }
+# reth-codecs-derive = { path =  "/home/xyz-bits/projects/blockchain/ethereum/reth/crates/storage/codecs/derive" }
+
+# bytes = "1.5"

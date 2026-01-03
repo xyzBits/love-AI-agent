@@ -21,6 +21,7 @@ use reth_ethereum::{
 };
 
 mod rlp_practice;
+mod mbdx_compress;
 
 // 引入 alloy-primitives 包，但不直接使用它
 
