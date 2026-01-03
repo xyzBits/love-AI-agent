@@ -261,9 +261,10 @@ mod test_weak {
     }
 }
 
+#[allow(unused_imports)]
 mod test_modify_week {
     use std::{
-        cell::{Ref, RefCell},
+        cell::RefCell,
         rc::{Rc, Weak},
     };
 
@@ -300,5 +301,74 @@ mod test_modify_week {
         }
 
         println!("修改后父节点的值：{}", parent.borrow().value);
+    }
+}
+
+#[cfg(test)]
+mod test_pin {
+    use std::marker::PhantomPinned;
+
+    #[test]
+    fn test_1() {
+        println!("====== 1. 基本类型 stack ======");
+        let mut x = 100;
+        let mut y = 200;
+
+        println!("交换前 x={}, y={}", x, y);
+        //  场景：简单的整数交换
+        std::mem::swap(&mut x, &mut y);
+        println!("交换后 x={}, y={}", x, y);
+
+        // 场景：用 -1 替换 x ，并拿走 x 原来的值
+        let old_x = std::mem::replace(&mut x, -1);
+        println!("Replace 后， x={}, old_x={}", x, old_x);
+
+        println!("====== 2. 堆上数据 ======");
+        let mut s1 = "I am A".to_string();
+        let mut s2 = "I am B".to_string();
+
+        println!("交换前， s1={}, s2={}", s1, s2);
+
+        // 这里仅仅交换了栈上的胖指针， ptr len cap
+        // 堆上的实际字节数组并没有被复制或者移动，所以速度极快
+        std::mem::swap(&mut s1, &mut s2);
+        println!("交换后， s1={}, s2={}", s1, s2);
+
+        let mut v = vec![1, 2, 3];
+        // 场景：拿走 vector 的所有权，留下一个空的 vector
+        let old_v = std::mem::take(&mut v);
+
+        println!(
+            "Take后: v长度={:?} (被掏空), old_v={:?} (拿到手)",
+            v.len(),
+            old_v
+        );
+    }
+
+    #[allow(dead_code)]
+    struct LockedVec {
+        data: Vec<i32>,
+
+        // 这个标记就像给结构体打了禁止移动的钢印
+        _pin: PhantomPinned,
+    }
+
+    #[allow(unused_variables)]
+    #[allow(unused_mut)]
+    #[test]
+    fn test_2() {
+        let v = LockedVec {
+            data: vec![1, 2, 3],
+            _pin: PhantomPinned,
+        };
+
+        let mut pinned_wrapper = Box::pin(v);
+
+        let mut other_wrapper = Box::pin(LockedVec {
+            data: vec![4, 5, 6],
+            _pin: PhantomPinned,
+        });
+
+        // std::mem::swap(pinned_wrapper.as_mut(), other_wrapper.as_mut());
     }
 }

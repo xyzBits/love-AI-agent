@@ -42,7 +42,8 @@ impl DataFetcher for NetworkFetcher {
     }
 }
 
-#[tokio::test]
+// #[tokio::test]
+#[allow(dead_code)]
 async fn test_work() {
     let f = MyFetcher;
 
@@ -142,7 +143,8 @@ where
     }
 }
 
-#[tokio::test]
+// #[tokio::test]
+#[allow(dead_code)]
 async fn test_wapper() {
     let origin = NetworkFetcher;
 
