@@ -296,3 +296,92 @@ mod test_actor {
         // anyhow anyhow::Result<T> 可以吞下任何错误，不需要处理特定错误，只要把错误链条打印出来 给开发者看
     }
 }
+
+
+
+/// T: 'static 意味着 T 是自给自足的，它不依赖于任何外部的、临时的借用数据
+///     你自己买了一套房，你拥有所有权
+///     全所有权类型
+/// T: 'static 是一个类型约束，它要求类型 T 不包含任何非静态的引用 non-static reference 
+/// 要么 T 拥有它所有的数据，比如 String Vec struct 
+/// 要么 T 里引用的全是 &'static 的静态变量
+/// 它的根本目的是确保这个数据可以被安全的移动到其他线程或者保持任意久，而不用担心它依赖的外部数据被提前释放    
+/// 
+///     i32 String Vec<u8> MyStruct 假设字段都是 Owned 
+/// &'static T 是一个引用，它指向的数据必须活得跟程序一样长，例如字符串字面量 "hello"
+/// 
+#[cfg(test)]
+#[allow(dead_code)]
+#[allow(unused_assignments)]
+#[allow(unused_variables)]
+mod test_life_time {
+
+    // 书中有一个引用，指向别的字符串，Book 实例不能活得比 title 指向的字符串长，
+    // 不然 book 实例还存活，title 已经没了，指向一个空的地方
+    // 结构体实例还存在，但是内部字段指向的内存已经失效，这是不允许的
+    struct Book<'a> {
+        title: &'a str,
+    }
+
+    #[test]
+    fn test_struct_life_time() {
+        // 1. 定义一个变量 book，它的生命周期开始
+        let book;
+
+        {
+            // 2. 在内部作用域创建一个 字符串 String，它是所有者
+            let s = String::from("Hello Rust");
+
+            // 3. 借用 s 的内容给 book
+            // 此时 book 的 title 指向了 s 的内存
+            book = Book {title: &s};
+        }// 4. 灾难发生在这里
+        // s 离开了作用域，调用 drop 内存被释放
+        // 但是，外部的 book 依然活着，并且手里还拿着已经指向已释放内存的引用
+
+        // 5. 试图打印 book 
+        // println!("book title: {}", book.title);
+    }
+
+    // 这个函数没有任何实际逻辑，它只是一个检测器
+    // 只有满足 T: 'static 的东西才能传进来
+    fn require_static<T: 'static>(_: T) {
+        println!("成功，这个类型满足 'static 约束");
+    }
+
+    const TITLE: &'static str = "rust";
+
+    #[test]
+    fn test_3() {
+        let s = String::from("hello");
+
+        // String 是 T: 'static 的
+        // 虽然 s 在 main 函数结束 时就会被  drop，
+        // 但它是自给自足的，不依赖外部引用
+        require_static(s);
+
+        let s1 = String::from("我是外部数据");
+        let s2 = &s1;
+        // require_static(s2);
+
+        let title = String::from("Rust");
+        let book = Book {title: &title};
+
+        // require_static(book);
+
+
+        let another_book = Book {title: &TITLE};
+
+        require_static(another_book);
+
+    }
+
+    static MY_LUCK_NUMBER: i32 = 42;
+
+    #[test]
+    fn test_4() {
+        let x: &'static i32 = &100;
+        println!("x = {x}");
+    }
+
+}
