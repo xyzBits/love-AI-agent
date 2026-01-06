@@ -277,7 +277,12 @@ mod interview_tests {
 
 #[cfg(test)]
 mod inner_mut_tests {
-    use std::{cell::RefCell, collections::HashMap, sync::{Arc, RwLock}, thread};
+    use std::{
+        cell::RefCell,
+        collections::HashMap,
+        sync::{Arc, RwLock},
+        thread,
+    };
 
     use dashmap::DashMap;
 
@@ -299,7 +304,8 @@ mod inner_mut_tests {
             // 获取不可变借用，检查  key 是否存在
             // 内部借用计数+1，变量map_ref 一直活着，作用域持续到函数结束
 
-            {// 在这个块结束时，读锁会被释放
+            {
+                // 在这个块结束时，读锁会被释放
                 let map_ref = self.map.borrow();
 
                 if let Some(v) = map_ref.get(key) {
@@ -320,7 +326,6 @@ mod inner_mut_tests {
             "default".into()
         }
 
-
         #[allow(dead_code)]
         fn get_or_insert_v2(&self, key: &str) -> String {
             // 直接获取可变借用，一步到位
@@ -329,9 +334,10 @@ mod inner_mut_tests {
             // 1. entry(key) 查找  key
             // 2. or_inser() 如果空就插入，如果不空就返回已有的引用
             // 3. clone() 拿到值
-            map_mut.entry(key.to_string())
-            .or_insert("default".to_string())
-            .clone()
+            map_mut
+                .entry(key.to_string())
+                .or_insert("default".to_string())
+                .clone()
         }
     }
 
@@ -346,48 +352,44 @@ mod inner_mut_tests {
         println!("Second call: {}", cache.get_or_insert("user_1"));
     }
 
-
-
     /// Clone 可以让我们轻易的把引用计数复制给多个线程
     #[derive(Clone)]
     struct ThreadSafeCache {
-
         // Arc: 让 Cache 可以被多个线程持有
         // RwLock： 替代 RefCell，提供线程安全的读写锁
         map: Arc<RwLock<HashMap<String, String>>>,
-
     }
-
 
     impl ThreadSafeCache {
         fn new() -> Self {
-            ThreadSafeCache { map: Arc::new(RwLock::new(HashMap::new())) }
+            ThreadSafeCache {
+                map: Arc::new(RwLock::new(HashMap::new())),
+            }
         }
 
         fn get_or_insert(&self, key: &str) -> String {
-            // 第一步，尝试读 
+            // 第一步，尝试读
             {
                 // 获取读锁
                 let r_lock = self.map.read().unwrap();
                 if let Some(v) = r_lock.get(key) {
                     return v.clone();
                 }
-            }// 读锁在这里释放
+            } // 读锁在这里释放
             // 如果不在这里释放，下面去拿写锁时，就会发生死锁
 
-            // 第二步，尝试写 write lock 
+            // 第二步，尝试写 write lock
             let mut w_lock = self.map.write().unwrap();
             // 为什么 double check 在释放读锁，加写锁的中间，可能已经有别的线程插入进来进行操作
-            w_lock.entry(key.to_string())
-            .or_insert_with(|| {
-                println!("Thread {:?} is inserting...", thread::current().id());
-                "default".to_string()
-            })
-            .clone()
-
+            w_lock
+                .entry(key.to_string())
+                .or_insert_with(|| {
+                    println!("Thread {:?} is inserting...", thread::current().id());
+                    "default".to_string()
+                })
+                .clone()
         }
     }
-
 
     #[test]
     fn test_4() {
@@ -395,22 +397,20 @@ mod inner_mut_tests {
         let mut handles = vec![];
 
         // 模拟  10 个线程去读取插入同一个 key
-        for i  in  0..20 {
-            let cache_clone = cache.clone();// 增加了引用计数
+        for i in 0..20 {
+            let cache_clone = cache.clone(); // 增加了引用计数
             let handle = thread::spawn(move || {
                 let val = cache_clone.get_or_insert("user_1");
                 println!("Thread: {}, Got: {}", i, val);
             });
 
             handles.push(handle);
-
         }
 
         for ele in handles {
             ele.join().unwrap()
         }
     }
-
 
     #[derive(Clone)]
     struct RethStypeCache {
@@ -419,40 +419,38 @@ mod inner_mut_tests {
 
     impl RethStypeCache {
         fn new() -> Self {
-            RethStypeCache { map: Arc::new(DashMap::new()) }
+            RethStypeCache {
+                map: Arc::new(DashMap::new()),
+            }
         }
-
 
         fn get_or_insert(&self, key: &str) -> String {
             self.map
-            .entry(key.to_string())
-            .or_insert("default".to_string())
-            .value()
-            .clone()
+                .entry(key.to_string())
+                .or_insert("default".to_string())
+                .value()
+                .clone()
         }
     }
 
-
     #[test]
     fn test_5() {
-                let cache = RethStypeCache::new();
+        let cache = RethStypeCache::new();
         let mut handles = vec![];
 
         // 模拟  10 个线程去读取插入同一个 key
-        for i  in  0..20 {
-            let cache_clone = cache.clone();// 增加了引用计数
+        for i in 0..20 {
+            let cache_clone = cache.clone(); // 增加了引用计数
             let handle = thread::spawn(move || {
                 let val = cache_clone.get_or_insert("user_1");
                 println!("Thread: {}, Got: {}", i, val);
             });
 
             handles.push(handle);
-
         }
 
         for ele in handles {
             ele.join().unwrap()
         }
     }
-
 }

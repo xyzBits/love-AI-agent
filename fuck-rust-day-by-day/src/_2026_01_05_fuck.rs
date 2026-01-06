@@ -297,19 +297,17 @@ mod test_actor {
     }
 }
 
-
-
 /// T: 'static 意味着 T 是自给自足的，它不依赖于任何外部的、临时的借用数据
 ///     你自己买了一套房，你拥有所有权
 ///     全所有权类型
-/// T: 'static 是一个类型约束，它要求类型 T 不包含任何非静态的引用 non-static reference 
-/// 要么 T 拥有它所有的数据，比如 String Vec struct 
+/// T: 'static 是一个类型约束，它要求类型 T 不包含任何非静态的引用 non-static reference
+/// 要么 T 拥有它所有的数据，比如 String Vec struct
 /// 要么 T 里引用的全是 &'static 的静态变量
 /// 它的根本目的是确保这个数据可以被安全的移动到其他线程或者保持任意久，而不用担心它依赖的外部数据被提前释放    
-/// 
-///     i32 String Vec<u8> MyStruct 假设字段都是 Owned 
+///
+///     i32 String Vec<u8> MyStruct 假设字段都是 Owned
 /// &'static T 是一个引用，它指向的数据必须活得跟程序一样长，例如字符串字面量 "hello"
-/// 
+///
 #[cfg(test)]
 #[allow(dead_code)]
 #[allow(unused_assignments)]
@@ -334,12 +332,12 @@ mod test_life_time {
 
             // 3. 借用 s 的内容给 book
             // 此时 book 的 title 指向了 s 的内存
-            book = Book {title: &s};
-        }// 4. 灾难发生在这里
+            book = Book { title: &s };
+        } // 4. 灾难发生在这里
         // s 离开了作用域，调用 drop 内存被释放
         // 但是，外部的 book 依然活着，并且手里还拿着已经指向已释放内存的引用
 
-        // 5. 试图打印 book 
+        // 5. 试图打印 book
         // println!("book title: {}", book.title);
     }
 
@@ -365,15 +363,13 @@ mod test_life_time {
         // require_static(s2);
 
         let title = String::from("Rust");
-        let book = Book {title: &title};
+        let book = Book { title: &title };
 
         // require_static(book);
 
-
-        let another_book = Book {title: &TITLE};
+        let another_book = Book { title: &TITLE };
 
         require_static(another_book);
-
     }
 
     static MY_LUCK_NUMBER: i32 = 42;
@@ -383,5 +379,4 @@ mod test_life_time {
         let x: &'static i32 = &100;
         println!("x = {x}");
     }
-
 }
