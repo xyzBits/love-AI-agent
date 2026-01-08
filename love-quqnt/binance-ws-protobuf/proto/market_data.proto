@@ -1,0 +1,20 @@
+// 文件路径: proto/market_data.proto
+syntax = "proto3";
+
+package binance;
+
+// 模拟的 Trade 结构
+// 注意：字段后面的数字 (=1, =2) 必须和币安发的一模一样，否则解析出来是空的！
+message Trade {
+  string event_type = 1;      // "e"
+  int64 event_time = 2;       // "E"
+  string symbol = 3;          // "s"
+  int64 trade_id = 4;         // "t"
+  string price = 5;           // "p" (币安通常用 string 传价格以防精度丢失)
+  string quantity = 6;        // "q"
+  int64 buyer_order_id = 7;   // "b"
+  int64 seller_order_id = 8;  // "a"
+  int64 trade_time = 9;       // "T"
+  bool is_buyer_maker = 10;   // "m"
+  bool ignore = 11;           // "M"
+}

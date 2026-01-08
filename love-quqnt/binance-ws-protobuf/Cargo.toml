@@ -1,0 +1,18 @@
+[package]
+name = "binance-ws-protobuf"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
+url = "2"
+# Google Protobuf 的 Rust 实现
+prost = "0.13" 
+# 用于支持 DateTime 等类型（可选，这里先不用）
+# prost-types = "0.13"
+
+[build-dependencies]
+# 编译时用来把 .proto 文件转成 Rust 代码
+prost-build = "0.13"
