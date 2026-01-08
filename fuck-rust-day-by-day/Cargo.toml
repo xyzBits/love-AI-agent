@@ -21,4 +21,3 @@ smol_str = "0.2"
 [dev-dependencies]
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] } # 用于连接 WSS
 futures-util = "0.3" # 用于处理流 (Stream)
-url = "2"

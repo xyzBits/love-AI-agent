@@ -69,8 +69,6 @@ mod test_websocket {
 
     use futures_util::StreamExt;
     use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-    use url::Url;
-
     // 定义接收到的 Trade 数据结构
     // 字段名映射参考 Binance 官方文档: https://binance-docs.github.io/apidocs/spot/en/#trade-streams
     #[derive(Debug, Deserialize)]
@@ -94,7 +92,11 @@ mod test_websocket {
         is_buyer_maker: bool, // 买方是否是做市商（true代表主动卖出，false代表主动买入）
     }
 
+    /// websocket 协议在底层传输时，会给数据打上标记，
+    /// text frame 告诉接收方这是人类可读文本，按utf-8解析
+    /// binary frame 告诉接收方，这是原始字节，不要尝试解析成字符
     #[tokio::test]
+    #[ignore = "proxy not connect"]
     async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // 1. 设置 Binance WebSocket 地址
         // 格式: wss://stream.binance.com:9443/ws/<symbol>@trade
@@ -117,7 +119,7 @@ mod test_websocket {
         while let Some(message) = read.next().await {
             match message {
                 Ok(msg) => {
-                    // 处理文本消息
+                    // 处理文本消息，utf-8 字符串，比如 json html
                     if let Message::Text(text) = msg {
                         // 尝试解析 JSON
                         match serde_json::from_str::<TradeEvent>(&text) {
@@ -148,5 +150,67 @@ mod test_websocket {
         }
 
         Ok(())
+    }
+
+    #[test]
+    fn test_1() {
+        let s1 = "hello";
+        let result = s1.chars().all(char::is_lowercase);
+        println!("result={}", result);
+    }
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[allow(unused_variables)]
+mod test_from_into {
+
+    #[derive(Debug)]
+    struct Pork;
+
+    #[derive(Debug)]
+    struct Sausage;
+
+    // --- 建造单行道：从 猪肉(A) 到 香肠(B) ---
+    // 只要实现了这个，编译器会自动送你一个 Pork.into() 方法
+    impl From<Pork> for Sausage {
+        fn from(value: Pork) -> Self {
+            println!("机器嗡嗡响... 猪肉变成了香肠！");
+            Sausage
+        }
+    }
+
+    #[test]
+    fn test_transfer() {
+        let raw_meat = Pork;
+
+        // ==========================================
+        // ✅ 顺流而下：猪肉 -> 香肠 (A -> B)
+        // ==========================================
+
+        // 写法 1: 使用 From (被动语态)
+        // 意思：香肠是由猪肉变来的
+        let dinner1 = Sausage::from(raw_meat);
+
+        // 写法 2: 使用 Into (主动语态)
+        // 意思：猪肉变成了香肠
+        // 注意：这里只是换了个写法，方向依然是 A -> B
+
+        let fresh_meat = Pork;
+        let dinner2: Sausage = fresh_meat.into();
+        println!("我们得到了两根香肠: {:?}, {:?}", dinner1, dinner2);
+
+        // ==========================================
+        // ❌ 逆流而上：香肠 -> 猪肉 (B -> A)
+        // ==========================================
+
+        let leftover_sausage = Sausage;
+
+        // 下面这行代码会直接报错！
+        // 编译器OS：你只教了我怎么把肉绞碎，没教我怎么把碎肉拼回一只猪啊！
+
+        // let magic_meat: Pork = leftover_sausage.into();
+
+        // 报错信息：the trait `From<Sausage>` is not implemented for `Pork`
     }
 }
