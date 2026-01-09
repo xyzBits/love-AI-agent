@@ -10,6 +10,8 @@ mod once_lock_tests {
 
     use std::collections::HashMap;
 
+    use reth_ethereum::pool::NewBlobSidecar;
+
     // 1. 全局配置、单例
     // 定义一个全局的 onceLock，它是空的，不占什么资源
     static CONFIG: OnceLock<HashMap<String, String>> = OnceLock::new();
@@ -88,5 +90,22 @@ mod once_lock_tests {
         static DATA: &str = "hello world";
 
         println!("data = {DATA}");
+    }
+
+
+    #[test]
+    fn test_bytes() {
+        // 假设这是从以太坊发过来的 8 个字节数据
+        let bytes: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 1];
+
+        // 转换 
+        let num = u64::from_be_bytes(bytes);
+
+        println!("num ={}", num);
+
+
+        let new_bytes = num.to_be_bytes();
+        println!("new bytes ={:?}", new_bytes);
+
     }
 }
