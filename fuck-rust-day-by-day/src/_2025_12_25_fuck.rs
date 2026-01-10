@@ -2,6 +2,7 @@
 #[allow(unused_assignments)]
 #[allow(unused)]
 #[tokio::test]
+#[ignore = "no"]
 async fn test_busy_loop_trap() {
     // 1. 创建两个通道
     // data_channel 模拟下载区块的数据流

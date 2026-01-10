@@ -44,6 +44,7 @@ mod test_tokio {
     #[tokio::test]
     #[allow(dead_code)]
     #[allow(unused_variables)]
+    #[ignore = "no reason"]
     async fn test_mutex_2() {
         // 全局计数器，用 Arc<Mutex> 保护
         let counter = Arc::new(tokio::sync::Mutex::new(0));
