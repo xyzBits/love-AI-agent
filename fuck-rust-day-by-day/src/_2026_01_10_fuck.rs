@@ -176,3 +176,32 @@ fn test_associated_type() {
     con.add("hello".to_string());
     println!("last: {:?}", con.get());
 }
+
+#[allow(unused_variables)]
+fn process_sized<T: Sized>(item: T) {}
+
+/// T: ?Sized 表示  T 可以是定长的，也可以是不定长的
+#[allow(unused_variables)]
+fn process_not_sized<T: ?Sized>(item: Box<T>) {
+    // 比如这里可以打印内存大小
+    println!("Size of value: {}", std::mem::size_of_val(&*item));
+}
+
+#[test]
+fn test_type_constrain() {
+    process_sized::<u32>(3);
+
+    // 1. 传定长类型 (Sized)
+    let b1 = Box::new(100); // T = i32
+    process_not_sized(b1);
+
+    // 2. 传不定长字符串 (Unsized str)
+    // "hello".into() 会把 &str 转成 Box<str>
+    let b2: Box<str> = "hello".into(); // T = str
+    process_not_sized(b2);
+
+    // 3. 传不定长切片 (Unsized slice)
+    // vec![] 转成 Box<[u8]>
+    let b3: Box<[u8]> = vec![1, 2, 3].into_boxed_slice(); // T = [u8]
+    process_not_sized(b3);
+}
