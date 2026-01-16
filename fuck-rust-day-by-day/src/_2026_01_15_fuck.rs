@@ -1,5 +1,6 @@
 use async_trait::async_trait; // 👈 引入宏
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
 
@@ -208,4 +209,14 @@ async fn main() {
 
     // 运行！目标高度 50 会触发我们的测试回滚逻辑
     pipeline.run(50).await;
+}
+
+
+#[test]
+fn test_mbdx() -> anyhow::Result<()> {
+    let path = Path::new("/tmp/my_mbdx_data");
+    std::fs::create_dir_all(path)?;
+
+
+    Ok(())
 }
