@@ -2,7 +2,7 @@ use async_trait::async_trait; // 👈 引入宏
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 // ==========================================
 // 1. 定义核心类型
@@ -122,10 +122,7 @@ struct Pipeline {
 
 impl Pipeline {
     fn new(db: Database) -> Self {
-        Self {
-            stages: vec![],
-            db,
-        }
+        Self { stages: vec![], db }
     }
 
     fn add_stage<S: Stage + 'static>(&mut self, stage: S) {
@@ -142,14 +139,13 @@ impl Pipeline {
 
             // 内层循环：按顺序执行每个 Stage
             for i in 0..self.stages.len() {
-                
                 // 【技巧点】：限制可变借用的范围
                 // 我们在一个单独的代码块里执行 execute，执行完后 `stage` 借用就结束了
                 // 这样我们在下面的 Unwind 分支里就可以再次借用 self.stages
                 let result = {
                     let stage = &mut self.stages[i];
                     stage.execute(&self.db, target).await
-                }; 
+                };
 
                 match result {
                     StageResult::Done { .. } => {
@@ -161,7 +157,7 @@ impl Pipeline {
                         // 注意：这里我们为了简化，再次获取了 id (避免上面的借用冲突)
                         let stage_id = self.stages[i].id();
                         self.db.save_progress(stage_id, height);
-                        
+
                         // 只要有一个阶段还在 Progress，就说明没完全结束
                         all_done = false;
                     }
@@ -178,10 +174,10 @@ impl Pipeline {
                         }
 
                         println!("🔄 回滚完成，重启 Pipeline...\n");
-                        
+
                         // 关键：跳出 for 循环，触发外层 loop 重新开始
                         // 因为回滚后状态变了，必须从头跑 Stage 0
-                        break; 
+                        break;
                     }
                 }
             }
@@ -200,6 +196,7 @@ impl Pipeline {
 // ==========================================
 
 #[tokio::test]
+#[ignore = " 只作为示例运行 "]
 async fn main() {
     let db = Database::new();
     let mut pipeline = Pipeline::new(db.clone());
@@ -211,12 +208,10 @@ async fn main() {
     pipeline.run(50).await;
 }
 
-
 #[test]
 fn test_mbdx() -> anyhow::Result<()> {
     let path = Path::new("/tmp/my_mbdx_data");
     std::fs::create_dir_all(path)?;
-
 
     Ok(())
 }

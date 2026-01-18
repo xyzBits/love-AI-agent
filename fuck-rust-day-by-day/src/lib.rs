@@ -36,4 +36,12 @@ mod _2026_01_11_fuck;
 mod _2026_01_14_fuck;
 
 #[allow(dead_code)]
+#[allow(unused_imports)]
 mod _2026_01_15_fuck;
+
+#[allow(dead_code)]
+mod _2026_01_16_fuck;
+
+#[allow(dead_code)]
+#[allow(unused_imports)]
+mod _2026_01_18_fuck;

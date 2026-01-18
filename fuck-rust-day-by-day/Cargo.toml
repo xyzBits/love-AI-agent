@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokio = {version = "1", features = ["full"]}
+# tokio = {version = "1", features = ["full"]}
 tokio-util = {version = "0.7", features = ["codec"]}
 bytes = "1"
 serde = {version = "1", features = ["derive"]}
@@ -18,9 +18,29 @@ dashmap = "5.5"
 
 smol_str = "0.2"
 
-libmbdx = "0.1"
+# Reth 的核心类型库 (Address, B256, U256, keccak256 等都在这里)
+# alloy-primitives = "1.5.2" 
+alloy = { version = "0.1", features = ["full"] }
 
+# Reth 使用的签名和钱包库
+alloy-signer = "0.1"
+alloy-signer-local = "0.1"
+
+# 16进制编码 (Reth 也在用)
+hex = "0.4"
+
+# 异步运行时 (Alloy 的签名接口是异步的)
+tokio = { version = "1", features = ["full", "macros"] }
+eyre = "0.6" # 更好的错误处理，Reth 也在用
+
+# Base64 标准库 (目前最新是用 engine 模式)
+base64 = "0.22"
+
+# Base58 标准库 (区块链常用)
+bs58 = "0.5"
 
 [dev-dependencies]
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] } # 用于连接 WSS
 futures-util = "0.3" # 用于处理流 (Stream)
+
+
