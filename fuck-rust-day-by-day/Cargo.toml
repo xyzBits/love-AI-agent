@@ -39,6 +39,8 @@ base64 = "0.22"
 # Base58 标准库 (区块链常用)
 bs58 = "0.5"
 
+rocksdb = "0.24" # 建议检查最新版本
+
 [dev-dependencies]
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] } # 用于连接 WSS
 futures-util = "0.3" # 用于处理流 (Stream)
