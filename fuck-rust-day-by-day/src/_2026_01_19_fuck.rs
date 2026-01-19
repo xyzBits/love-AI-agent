@@ -2,7 +2,7 @@ use rocksdb::WriteBatch;
 
 #[test]
 fn test_rocketdb_crud() -> anyhow::Result<(), Box<dyn std::error::Error>> {
-    let path = "myeb_ex1";
+    let path = "mydb_ex1";
     let db = rocksdb::DB::open_default(path)?;
 
     // 1. Put
