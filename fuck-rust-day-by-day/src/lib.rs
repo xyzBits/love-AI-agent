@@ -56,4 +56,21 @@ mod _2026_01_20_fuck;
 
 #[allow(dead_code)]
 #[allow(unused_imports)]
+#[allow(unused_variables)]
+#[allow(unused_must_use)]
+#[allow(unused_mut)]
 mod _2026_01_31_fuck;
+
+#[allow(dead_code)]
+#[allow(unused_imports)]
+#[allow(unused_variables)]
+#[allow(unused_must_use)]
+#[allow(unused_mut)]
+mod _2026_02_01_fuck;
+
+#[allow(dead_code)]
+#[allow(unused_imports)]
+#[allow(unused_variables)]
+#[allow(unused_must_use)]
+#[allow(unused_mut)]
+mod _2026_02_05_fuck;

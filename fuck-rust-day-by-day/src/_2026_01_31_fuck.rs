@@ -372,3 +372,222 @@ mod example {
             .commit(); // 编译失败！Connected 没有 commit 方法
     }
 }
+
+mod future_practice {
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::task::{Context, Poll};
+    use std::time::{Duration, Instant};
+
+    // ==========================================
+    // 练习 1：实现一个简单的 Delay Future
+    // ==========================================
+
+    /// 一个简单的延时 Future
+    struct Delay {
+        when: Instant,
+    }
+
+    impl Delay {
+        fn new(duration: Duration) -> Self {
+            Delay {
+                when: Instant::now() + duration,
+            }
+        }
+    }
+
+    impl Future for Delay {
+        type Output = ();
+
+        fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if Instant::now() >= self.when {
+                Poll::Ready(())
+            } else {
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
+
+    // ==========================================
+    // 练习 2：实现一个计数 Future
+    // ==========================================
+
+    /// 一个需要被 poll 多次才能完成的 Future
+    struct CountDown {
+        remaining: u32,
+        total: u32,
+    }
+
+    impl CountDown {
+        fn new(count: u32) -> Self {
+            CountDown {
+                remaining: count,
+                total: count,
+            }
+        }
+    }
+
+    impl Future for CountDown {
+        type Output = u32;
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if self.remaining == 0 {
+                Poll::Ready(self.total)
+            } else {
+                self.remaining -= 1;
+                println!("CountDown: 还剩 {} 次", self.remaining);
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
+
+    // ==========================================
+    // 练习 3：组合两个 Future（顺序执行）
+    // ==========================================
+
+    /// 顺序执行两个 Future：先执行 A，再执行 B
+    struct ThenFuture<A, B>
+    where
+        A: Future,
+        B: Future,
+    {
+        first: Option<A>,
+        second: Option<B>,
+        state: ThenState,
+    }
+
+    enum ThenState {
+        First,
+        Second,
+    }
+
+    impl<A, B> ThenFuture<A, B>
+    where
+        A: Future,
+        B: Future,
+    {
+        fn new(first: A, second: B) -> Self {
+            ThenFuture {
+                first: Some(first),
+                second: Some(second),
+                state: ThenState::First,
+            }
+        }
+    }
+
+    impl<A, B> Future for ThenFuture<A, B>
+    where
+        A: Future<Output = ()> + Unpin,
+        B: Future<Output = ()> + Unpin,
+    {
+        type Output = ();
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+            let this = self.get_mut();
+
+            loop {
+                match this.state {
+                    ThenState::First => {
+                        if let Some(ref mut first) = this.first {
+                            match Pin::new(first).poll(cx) {
+                                Poll::Ready(()) => {
+                                    this.first = None;
+                                    this.state = ThenState::Second;
+                                    continue;
+                                }
+                                Poll::Pending => return Poll::Pending,
+                            }
+                        }
+                    }
+                    ThenState::Second => {
+                        if let Some(ref mut second) = this.second {
+                            match Pin::new(second).poll(cx) {
+                                Poll::Ready(()) => {
+                                    this.second = None;
+                                    return Poll::Ready(());
+                                }
+                                Poll::Pending => return Poll::Pending,
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // 辅助：返回 () 的简单倒计时（用于测试 ThenFuture）
+    // ==========================================
+
+    struct SimpleCountDown {
+        remaining: u32,
+        name: &'static str,
+    }
+
+    impl SimpleCountDown {
+        fn new(count: u32, name: &'static str) -> Self {
+            SimpleCountDown {
+                remaining: count,
+                name,
+            }
+        }
+    }
+
+    impl Future for SimpleCountDown {
+        type Output = ();
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if self.remaining == 0 {
+                println!("[{}] 完成!", self.name);
+                Poll::Ready(())
+            } else {
+                println!("[{}] 还剩 {} 次", self.name, self.remaining);
+                self.remaining -= 1;
+                cx.waker().wake_by_ref();
+                Poll::Pending
+            }
+        }
+    }
+
+    impl Unpin for SimpleCountDown {}
+
+    // ==========================================
+    // 测试
+    // ==========================================
+
+    #[tokio::test]
+    async fn test_delay() {
+        println!("开始等待...");
+        let start = Instant::now();
+
+        Delay::new(Duration::from_millis(100)).await;
+
+        let elapsed = start.elapsed();
+        println!("等待完成！耗时: {:?}", elapsed);
+        assert!(elapsed >= Duration::from_millis(100));
+    }
+
+    #[tokio::test]
+    async fn test_countdown() {
+        println!("开始倒计时...");
+
+        let result = CountDown::new(5).await;
+
+        println!("倒计时完成！总共 poll 了 {} 次", result);
+        assert_eq!(result, 5);
+    }
+
+    #[tokio::test]
+    async fn test_then_future() {
+        println!("=== 开始测试 ThenFuture ===\n");
+
+        let first = SimpleCountDown::new(3, "First");
+        let second = SimpleCountDown::new(2, "Second");
+
+        ThenFuture::new(first, second).await;
+
+        println!("\n=== ThenFuture 测试完成 ===");
+    }
+}
